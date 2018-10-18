@@ -19,7 +19,7 @@ cat > /root/limit.sh <<END3
 END3
 
 cd /usr/local/bin
-wget -O premium-script.tar.gz "https://raw.githubusercontent.com/azroy369/autoinstall/master/premium-script.tar.gz"
+wget -O premium-script.tar.gz "https://raw.githubusercontent.com/azroy369/autoinstall/master/premium-script.zip"
 unzip premium-script.zip
 rm -f premium-script.zip
 
