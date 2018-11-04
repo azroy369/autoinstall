@@ -586,7 +586,6 @@ sed -i $MYIP2 /etc/iptables.up.rules;
 iptables-restore < /etc/iptables.up.rules
 
 # download script
-cd
 cd /usr/local/bin
 wget https://raw.githubusercontent.com/ZENON-VPN/autoscript/master/updates/install-premiumscript.sh 
 chmod +x install-premiumscript.sh
