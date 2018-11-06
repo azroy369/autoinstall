@@ -177,7 +177,7 @@ echo "/bin/false" >> /etc/shells
 
 # install vnstat gui
 cd /home/vps/public_html/
-wget https://raw.githubusercontent.com/azroy369/autoinstall/master/vnstat_php_frontend-1.5.1.tar.gz
+wget $source/vnstat_php_frontend-1.5.1.tar.gz
 tar xf vnstat_php_frontend-1.5.1.tar.gz
 rm vnstat_php_frontend-1.5.1.tar.gz
 mv vnstat_php_frontend-1.5.1 vnstat
@@ -224,18 +224,37 @@ refresh_pattern ^ftp: 1440 20% 10080
 refresh_pattern ^gopher: 1440 0% 1440
 refresh_pattern -i (/cgi-bin/|\?) 0 0% 0
 refresh_pattern . 0 20% 4320
-visible_hostname daybreakersx
+visible_hostname proxy.azroyvpn.com
 END
 sed -i $MYIP2 /etc/squid3/squid.conf;
 service squid3 restart
 
 # install stunnel4
-apt-get -y install stunnel4
-wget -O /etc/stunnel/stunnel.pem "https://raw.githubusercontent.com/azroy369/autoinstall/master/stunnel.pem"
-wget -O /etc/stunnel/stunnel.conf "https://raw.githubusercontent.com/azroy369/autoinstall/master/stunnel.conf"
-sed -i $MYIP2 /etc/stunnel/stunnel.conf
+apt-get install stunnel4 -y
+cat > /etc/stunnel/stunnel.conf <<-END
+cert = /etc/stunnel/stunnel.pem
+pid = /stunnel.pid
+client = no	
+socket = a:SO_REUSEADDR=1
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+[dropbear]
+accept = 443
+connect = 127.0.0.1:442
+connect = 127.0.0.1:109
+connect = 127.0.0.1:110
+;[squid]
+;accept = 8000
+;connect = 127.0.0.1:3128
+;connect = 127.0.0.1:80
+;connect = 127.0.0.1:8080
+END
+openssl genrsa -out key.pem 2048
+openssl req -new -x509 -key key.pem -out cert.pem -days 1095 \
+-subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email"
+cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
 sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-service stunnel4 restart
+/etc/init.d/stunnel4 restart
 
 # install webmin
 cd
@@ -274,8 +293,8 @@ mkdir /var/lib/premium-script
 /etc/init.d/pptpd restart
 
 # install mrtg
-wget -O /etc/snmp/snmpd.conf "https://raw.githubusercontent.com/azroy369/autoinstall/master/snmpd.conf"
-wget -O /root/mrtg-mem.sh "https://raw.githubusercontent.com/azroy369/autoinstall/master/mrtg-mem.sh"
+wget -O /etc/snmp/snmpd.conf $source/snmpd.conf
+wget -O /root/mrtg-mem.sh $source/mrtg-mem.sh
 chmod +x /root/mrtg-mem.sh
 cd /etc/snmp/
 sed -i 's/TRAPDRUN=no/TRAPDRUN=yes/g' /etc/default/snmpd
@@ -283,7 +302,7 @@ service snmpd restart
 snmpwalk -v 1 -c public localhost 1.3.6.1.4.1.2021.10.1.3.1
 mkdir -p /home/vps/public_html/mrtg
 cfgmaker --zero-speed 100000000 --global 'WorkDir: /home/vps/public_html/mrtg' --output /etc/mrtg.cfg public@localhost
-curl "https://raw.githubusercontent.com/azroy369/autoinstall/master/mrtg.conf" >> /etc/mrtg.cfg
+curl "$source/mrtg.conf" >> /etc/mrtg.cfg
 sed -i 's/WorkDir: \/var\/www\/mrtg/# WorkDir: \/var\/www\/mrtg/g' /etc/mrtg.cfg
 sed -i 's/# Options\[_\]: growright, bits/Options\[_\]: growright/g' /etc/mrtg.cfg
 indexmaker --output=/home/vps/public_html/mrtg/index.html /etc/mrtg.cfg
